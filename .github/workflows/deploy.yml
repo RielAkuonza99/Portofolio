@@ -1,0 +1,40 @@
+
+name: InfinityFree
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ftpupload.net
+          protocol: ftp
+          port: 21
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: htdocs/
+          exclude: |
+            **/.git/**
+            **/.github/**
+            **/node_modules/**
+            **/.env
+            **/.env.*
+            **/.agents/**
+            **/.claude/**
+            **/.opencode/**
+            **/CLAUDE.md
+            **/AGENTS.md
+            **/README.md
+            
