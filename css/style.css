@@ -66,7 +66,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}dialog p{color:var(--muted);margin:.6
 .media{width:100%;aspect-ratio:var(--r,16/9);overflow:hidden;background:var(--bg2);border-radius:var(--radius)}
 .media[data-type=web]{--r:16/9}.media[data-type=design]{--r:4/5}.media[data-type=app]{--r:9/16}
 .media img,.media video{width:100%;height:100%;object-fit:cover;display:block}.media video{object-fit:contain;background:#000}.media iframe{width:100%;height:100%;border:0;display:block;background:#000}
-.card .media{border-radius:0}.card .media[data-type=app]{width:55%;margin:.9rem 0}
+.card .media{border-radius:0;width:100%;margin:0}
 dialog .media{margin-bottom:1rem}dialog .media[data-type=design]{width:min(100%,340px);margin:0 auto 1rem}dialog .media[data-type=app]{width:min(100%,220px);margin:0 auto 1rem}
 .more-wrap{margin-top:2rem}
 .page{min-height:70vh;transition:opacity .25s ease,transform .25s ease}.page[hidden]{display:none}

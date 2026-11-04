@@ -103,7 +103,11 @@ CREATE TABLE IF NOT EXISTS projects (
   detail TEXT NOT NULL,
   tech TEXT NOT NULL,                                        -- JSON array of strings
   image_url VARCHAR(1000) NOT NULL DEFAULT '',
+  image_crop VARCHAR(40) NOT NULL DEFAULT 'center',
   video_url VARCHAR(1000) NOT NULL DEFAULT '',
+  video_start DECIMAL(10,2) NOT NULL DEFAULT 0,
+  video_end DECIMAL(10,2) NOT NULL DEFAULT 0,
+  video_crop VARCHAR(40) NOT NULL DEFAULT 'contain',
   github_url VARCHAR(1000) NOT NULL DEFAULT '',
   demo_url VARCHAR(1000) NOT NULL DEFAULT '',
   sort_order INT NOT NULL DEFAULT 0,
@@ -120,12 +124,18 @@ CREATE TABLE IF NOT EXISTS journey (
   year VARCHAR(20) NOT NULL,
   title VARCHAR(190) NOT NULL,
   body TEXT NOT NULL,
+  body_html MEDIUMTEXT NULL,
+  slug VARCHAR(200) NOT NULL DEFAULT '',
+  cover_url VARCHAR(1000) NOT NULL DEFAULT '',
+  document_url VARCHAR(1000) NOT NULL DEFAULT '',
+  link_url VARCHAR(1000) NOT NULL DEFAULT '',
   sort_order INT NOT NULL DEFAULT 0,
   status ENUM('draft','published') NOT NULL DEFAULT 'published',
   deleted_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_journey (year, title),
+  UNIQUE KEY uq_journey_slug (slug),
   KEY idx_journey_order (sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

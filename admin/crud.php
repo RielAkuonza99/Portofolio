@@ -56,9 +56,25 @@ function media_datalist(): void {
     echo '</datalist>';
 }
 function crud(array $c): void {
-    $T = $c['table']; $page = $c['page']; $fields = $c['fields']; $soft = !empty($c['soft']); $order = !empty($c['order']); $status = !empty($c['status']);
+    $crudTables = [
+        'profile_items' => ['id','kind','label','value','sort_order','status','deleted_at'],
+        'skill_categories' => ['id','key_name','label','sort_order','deleted_at','created_at','updated_at'],
+        'skills' => ['id','name','category_id','level','sort_order','status','deleted_at','created_at','updated_at'],
+        'socials' => ['id','provider_id','label','url','sort_order','status','deleted_at','created_at','updated_at'],
+    ];
+    $T = (string)($c['table'] ?? '');
+    if (!isset($crudTables[$T])) back((string)($c['page'] ?? 'overview'), 'err', 'Tabel CRUD tidak diizinkan.');
+    foreach (array_keys($c['fields']) as $column) {
+        if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/D', (string)$column) || !in_array((string)$column, $crudTables[$T], true)) back((string)$c['page'], 'err', 'Kolom CRUD tidak diizinkan.');
+    }
+    foreach (array_keys($c['list'] ?? []) as $column) {
+        if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/D', (string)$column) || !in_array((string)$column, $crudTables[$T], true)) back((string)$c['page'], 'err', 'Kolom daftar tidak diizinkan.');
+    }
+    $page = $c['page']; $fields = $c['fields']; $soft = !empty($c['soft']); $order = !empty($c['order']); $status = !empty($c['status']);
     $where = ($soft ? 'deleted_at IS NULL' : '1=1') . (isset($c['where']) ? ' AND ' . $c['where'] : '');
     $ob = $order ? 'sort_order, id' : (string)($c['order_by'] ?? 'id DESC');
+    $allowedOrderBy = ['sort_order, id','id DESC',"FIELD(kind,'bio','role','interest','goal'), sort_order, id"];
+    if (!in_array($ob, $allowedOrderBy, true)) back($page, 'err', 'Urutan CRUD tidak diizinkan.');
     $act = (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['_t'] ?? '') === $T) ? post_action() : null;
     if ($act !== null) {
         $allowed = ['save', 'delete'];
@@ -113,7 +129,7 @@ function crud(array $c): void {
     echo '<div class="card"><h2>' . ($edit ? 'Edit' : 'Tambah') . ' ' . e($c['label']) . '</h2><form method="post" class="fields">' . csrf_field() . '<input type="hidden" name="action" value="save"><input type="hidden" name="_t" value="' . e($T) . '"><input type="hidden" name="id" value="' . (int)($edit['id'] ?? 0) . '">';
     foreach ($fields as $n => $f) echo fld_input($f, $n, $src[$n] ?? '');
     if ($status) echo '<label>Status<select name="status" required><option value="published"' . (($src['status'] ?? 'published') === 'published' ? ' selected' : '') . '>Published</option><option value="draft"' . (($src['status'] ?? '') === 'draft' ? ' selected' : '') . '>Draft</option></select></label>';
-    echo '<div class="full"><button class="btn" type="submit">Simpan</button> ' . ($edit ? '<a class="btn sec" href="index.php?p=' . e($page) . '">Batal</a>' : '') . '</div></form></div>';
+    echo '<div class="full"><button class="btn" type="submit" data-confirm="Simpan data ini?">Simpan</button> ' . ($edit ? '<a class="btn sec" href="index.php?p=' . e($page) . '">Batal</a>' : '') . '</div></form></div>';
     $pg = max(1, (int)($_GET['pg'] ?? 1)); $per = 50;
     $total = (int)q_val("SELECT COUNT(*) FROM `$T` WHERE $where");
     $rows = q_all("SELECT * FROM `$T` WHERE $where ORDER BY $ob LIMIT $per OFFSET " . (($pg - 1) * $per));
@@ -124,7 +140,8 @@ function crud(array $c): void {
         echo '<tr>';
         foreach ($c['list'] as $col => $lab) { $v = (string)$r[$col]; if (!empty($c['trim'][$col])) $v = mb_strimwidth($v, 0, (int)$c['trim'][$col], '…'); echo '<td>' . e($v) . '</td>'; }
         if ($status) echo '<td><span class="pill ' . ($r['status'] === 'published' ? 'pub' : '') . '">' . e($r['status']) . '</span></td>';
-        $f = function (string $a, string $label, string $cls = 'sec', string $conf = '') use ($r, $T) { return '<form method="post">' . csrf_field() . '<input type="hidden" name="_t" value="' . e($T) . '"><input type="hidden" name="id" value="' . (int)$r['id'] . '"><input type="hidden" name="action" value="' . e($a) . '"><button class="btn sm ' . e($cls) . '" type="submit"' . ($conf ? ' data-confirm="' . e($conf) . '"' : '') . '>' . e($label) . '</button></form>'; };
+        $table = $T;
+        $f = function (string $a, string $label, string $cls = 'sec', string $conf = '') use ($r, $table) { return '<form method="post">' . csrf_field() . '<input type="hidden" name="_t" value="' . e($table) . '"><input type="hidden" name="id" value="' . (int)$r['id'] . '"><input type="hidden" name="action" value="' . e($a) . '"><button class="btn sm ' . e($cls) . '" type="submit"' . ($conf ? ' data-confirm="' . e($conf) . '"' : '') . '>' . e($label) . '</button></form>'; };
         echo '<td><div class="row-actions"><a class="btn sm sec" href="index.php?p=' . e($page) . '&t=' . $T . '&edit=' . (int)$r['id'] . '">Edit</a>';
         if ($order) echo $f('up', '↑') . $f('down', '↓');
         if ($status) echo $f('toggle', $r['status'] === 'published' ? 'Unpublish' : 'Publish', 'sec', 'Ubah status publikasi data ini?');

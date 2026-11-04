@@ -35,8 +35,8 @@ function public_payload(): ?array {
         $projects[] = $row;
     }
     $journey = array_map(function ($r) { return ['id' => (int)$r['id'], 'year' => $r['year'], 'title' => $r['title'], 'text' => $r['body'],
-        'html' => $r['body_html'] ?: $r['body'], 'slug' => $r['slug'] ?: '', 'cover' => $r['cover_url'], 'link' => $r['link_url']]; },
-        q_all("SELECT id, year, title, body, body_html, slug, cover_url, link_url FROM journey WHERE status='published' AND deleted_at IS NULL ORDER BY sort_order, id"));
+        'html' => $r['body_html'] ?: $r['body'], 'slug' => $r['slug'] ?: '', 'cover' => $r['cover_url'], 'document' => $r['document_url'] ?? '', 'link' => $r['link_url']]; },
+        q_all("SELECT id, year, title, body, body_html, slug, cover_url, document_url, link_url FROM journey WHERE status='published' AND deleted_at IS NULL ORDER BY sort_order, id"));
     return [
         'site' => ['logo' => $p['logo'], 'title' => $p['title'], 'name' => $p['name'], 'roles' => $list('role'), 'tagline' => $p['tagline'], 'photo' => $p['photo'],
             'cv' => $p['cv_url'], 'email' => $p['email'], 'about' => $p['about'], 'bio' => $bio, 'interests' => $list('interest'), 'goals' => $list('goal'), 'socials' => $socials],

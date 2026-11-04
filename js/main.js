@@ -47,9 +47,16 @@ trackVisit(); addEventListener("hashchange", trackVisit);
   const renderJourneyDetail = () => {
     const match = location.hash.match(/^#\/journey\/([^/?]+)/); const detail = $("journeyDetail"); if (!match) { detail.hidden = true; return; }
     const slug = decodeURIComponent(match[1]); const item = JOURNEY.find(j => (j.slug || "") === slug || slug === j.year + "-" + j.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")); if (!item) { detail.hidden = true; return; }
-    detail.hidden = false; detail.innerHTML = "<nav class='breadcrumb'><a href='#/home'>Home</a><span>Journey</span><strong></strong></nav><p class='muted'></p><h2></h2><div class='journey-copy'></div>";
-    detail.querySelector("strong").textContent = item.year + " " + item.title; detail.querySelector(".muted").textContent = item.year; detail.querySelector("h2").textContent = item.title;
-    detail.querySelector(".journey-copy").innerHTML = item.html || item.text; if (item.link) { const a=document.createElement("a"); a.href=item.link; a.target="_blank"; a.rel="noopener noreferrer"; a.className="btn sm"; a.textContent="Buka dokumentasi"; detail.append(a); }
+    detail.hidden = false; detail.textContent = "";
+    const breadcrumb = document.createElement("nav"); breadcrumb.className = "breadcrumb"; breadcrumb.setAttribute("aria-label", "Breadcrumb"); const home = document.createElement("a"); home.href="#/home"; home.textContent="Home"; const label=document.createElement("span"); label.textContent="Journey"; const current=document.createElement("strong"); current.textContent=item.year+" "+item.title; breadcrumb.append(home,label,current);
+    const year=document.createElement("p"); year.className="muted"; year.textContent=item.year; const title=document.createElement("h2"); title.textContent=item.title; const copy=document.createElement("div"); copy.className="journey-copy";
+    const allowed=new Set(["P","BR","STRONG","B","EM","I","U","UL","OL","LI","A","H2","H3","BLOCKQUOTE","CODE","SPAN"]);
+    const parsed=new DOMParser().parseFromString("<div>"+(item.html||item.text||"")+"</div>","text/html"); const clone=(node)=>{ if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||""); if(node.nodeType!==Node.ELEMENT_NODE)return document.createTextNode(""); if(!allowed.has(node.tagName)) {const fragment=document.createDocumentFragment(); node.childNodes.forEach(child=>fragment.append(clone(child))); return fragment;} const clean=document.createElement(node.tagName.toLowerCase()); if(node.tagName==="A"){const href=node.getAttribute("href")||""; try{const u=new URL(href,location.href); if(["http:","https:","mailto:"].includes(u.protocol)){clean.href=u.href;clean.target="_blank";clean.rel="noopener noreferrer";}}catch(e){}} node.childNodes.forEach(child=>clean.append(clone(child))); return clean;};
+    Array.from(parsed.body.firstElementChild.childNodes).forEach(node=>copy.append(clone(node)));
+    detail.append(breadcrumb,year,title,copy);
+    if(item.cover){const cover=document.createElement("img");cover.src=item.cover;cover.alt="";cover.loading="lazy";cover.className="journey-cover";detail.append(cover)}
+    if(item.document){const doc=document.createElement("a");doc.href=item.document;doc.target="_blank";doc.rel="noopener noreferrer";doc.className="btn sm";doc.textContent="Buka PDF dokumentasi";detail.append(doc)}
+    if(item.link){const link=document.createElement("a");link.href=item.link;link.target="_blank";link.rel="noopener noreferrer";link.className="btn sm";link.textContent="Buka dokumentasi";detail.append(link)}
   };
   addEventListener("hashchange", renderJourneyDetail); renderJourneyDetail();
 
