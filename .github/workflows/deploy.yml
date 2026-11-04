@@ -1,0 +1,44 @@
+name: Deploy to InfinityFree (manual)
+
+# Manual only: nothing deploys on push. Run from the Actions tab after you decide to release.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          protocol: ftp
+          port: 21
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: htdocs/
+          exclude: |
+            **/.git/**
+            **/.github/**
+            **/node_modules/**
+            **/.env
+            **/.env.*
+            **/*.env
+            config/.env
+            database/**
+            **/*.sql
+            **/*.bak
+            **/*.log
+            **/backup*/**
+            **/*.zip
+            **/.agents/**
+            **/.claude/**
+            **/.opencode/**
+            **/CLAUDE.md
+            **/AGENTS.md
+            **/README.md
+            .env.example

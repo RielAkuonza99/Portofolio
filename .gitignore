@@ -1,0 +1,9 @@
+.env
+config/.env
+*.env
+*.sql.bak
+backup*/
+*.log
+portfolio-infinityfree.zip
+.DS_Store
+node_modules/
