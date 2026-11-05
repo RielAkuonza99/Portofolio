@@ -36,9 +36,9 @@ const UI = (() => {
   const form = () => {
     const f = $("form"), btn = $("submitBtn");
     const rules = {
-      name: v => v.trim().length >= 2 || "Enter your name (at least 2 characters).",
-      email: v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) || "Enter a valid email address, like name@example.com.",
-      message: v => v.trim().length >= 10 || "Write at least 10 characters."
+      name: v => (v.trim().length >= 2 && v.trim().length <= 120) || "Enter a name between 2 and 120 characters.",
+      email: v => (v.length <= 190 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) || "Enter a valid email address, like name@example.com.",
+      message: v => (v.trim().length >= 10 && v.trim().length <= 5000) || "Write a message between 10 and 5,000 characters."
     };
     const check = el => {
       const r = rules[el.name](el.value), ok = r === true;
@@ -50,34 +50,45 @@ const UI = (() => {
       const ok = [...f.querySelectorAll("input,textarea")].map(check).every(Boolean);
       if (!ok) return toast("Fix the highlighted fields.");
       btn.classList.add("loading"); btn.disabled = true;
-      setTimeout(() => {
-        const d = new FormData(f);
+      f.setAttribute("aria-busy", "true");
+      btn.setAttribute("aria-label", "Sending message");
+      const d = new FormData(f);
+      const mailto = () => {
         const body = `${d.get("message")}\n\n— ${d.get("name")} (${d.get("email")})`;
         location.href = `mailto:${SITE.email}?subject=${encodeURIComponent("Message from portfolio")}&body=${encodeURIComponent(body)}`;
-        btn.classList.remove("loading"); btn.disabled = false;
-        toast("Your email app should open. Send the message from there.");
-      }, 700);
+        toast("Could not send directly. Your email app should open instead.");
+      };
+      fetch("api/public/contact.php", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: d.get("name"), email: d.get("email"), message: d.get("message") }) })
+        .then(r => { if (r.status === 429) toast("Too many messages. Please try again later."); else if (!r.ok) throw new Error(r.status); else { f.reset(); toast("Message sent. Thank you!"); } })
+        .catch(mailto)
+        .finally(() => { btn.classList.remove("loading"); btn.disabled = false; f.removeAttribute("aria-busy"); btn.removeAttribute("aria-label"); });
     });
   };
 
   // Loading screen: progress bar follows real boot steps, then eases into the page.
   const loader = (() => {
     let target = 6, p = 0, t0 = 0, stopped = false;
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const el = () => $("loader");
     const finish = () => {
       el().classList.add("done"); document.documentElement.classList.remove("loading");
     };
     const frame = () => {
       if (stopped) return;
-      p = Math.min(target, p + Math.max((target - p) * 0.07, target > p ? 0.2 : 0));
+      p = reduceMotion ? target : Math.min(target, p + Math.max((target - p) * 0.07, target > p ? 0.2 : 0));
       $("ldBar").style.transform = `scaleX(${p / 100})`; $("ldPct").textContent = Math.round(p) + "%";
+      $("ldBar").parentElement.setAttribute("aria-valuenow", String(Math.round(p)));
       if (p >= 99.5 && performance.now() - t0 > 1400) return finish();
       requestAnimationFrame(frame);
     };
     return {
       start() { t0 = performance.now(); requestAnimationFrame(frame); },
-      progress(n, msg) { target = Math.max(target, n); if (msg) $("ldMsg").textContent = msg; },
-      fail(msg) { stopped = true; $("ldPct").textContent = "Error"; $("ldMsg").textContent = msg; }
+      progress(n, msg) { target = Math.min(100, Math.max(target, n)); if (msg) $("ldMsg").textContent = msg; },
+      fail(msg) {
+        stopped = true; $("ldPct").textContent = "Error"; $("ldMsg").textContent = msg;
+        $("ldBar").parentElement.setAttribute("aria-valuetext", "Loading failed");
+      }
     };
   })();
 
@@ -85,8 +96,8 @@ const UI = (() => {
     typing(); reveal(); cursor(); form();
     $("toTop").addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
     const cv = $("cvBtn");
-    if (SITE.cv) { cv.href = SITE.cv; cv.setAttribute("download", ""); }
-    else cv.addEventListener("click", e => { e.preventDefault(); toast("CV not added yet. Set site.cv in data/data.json."); });
+    if (SITE.cv) { cv.href = SITE.cv; if (/^https?:/i.test(SITE.cv)) { cv.target = "_blank"; cv.rel = "noopener noreferrer"; } else cv.setAttribute("download", ""); }
+    else cv.addEventListener("click", e => { e.preventDefault(); toast("CV not added yet. Add a CV in the dashboard."); });
   };
   return { init, toast, loader };
 })();

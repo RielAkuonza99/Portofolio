@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+<?php require __DIR__ . '/includes/public_meta.php'; $M = public_meta(); ?>
 <meta charset="UTF-8">
   
-  <!-- Google Search Console -->
-  <meta name="google-site-verification" content="LU7APQYFrLwWOgprYc2R_SQsKXa_kDBpWbjGVyHI-K4" />
+  <?php if ($M['gsv'] !== ''): ?><meta name="google-site-verification" content="<?= e($M['gsv']) ?>" /><?php endif; ?>
   
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Riel Akuonza — Informatics Student & Developer</title>
-<meta name="description" content="Personal portfolio of Riel Akuonza: biodata, skills, projects, and learning journey.">
-<meta property="og:title" content="Riel Akuonza — Portfolio">
-<meta property="og:description" content="Informatics student and developer. Projects, skills, and journey.">
-<meta name="theme-color" content="#f6f7f5">
-<link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+<title><?= e($M['title']) ?></title>
+<meta name="description" content="<?= e($M['description']) ?>">
+<meta property="og:title" content="<?= e($M['og_title']) ?>">
+<meta property="og:description" content="<?= e($M['og_description']) ?>">
+<meta name="theme-color" content="<?= e($M['theme_color']) ?>">
+<link rel="icon" href="<?= e($M['favicon']) ?>"<?= $M['favicon_type'] ? ' type="' . e($M['favicon_type']) . '"' : '' ?>>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
 <script>document.documentElement.classList.add("loading");try{var t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
-<div id="loader" role="status"><div class="ld-in"><p class="ld-title">Personal HUB</p><div class="ld-track"><i id="ldBar"></i></div><p class="ld-meta"><b id="ldPct">0%</b><b id="ldMsg">Loading…</b></p></div></div>
+<div id="loader" role="status" aria-live="polite"><div class="ld-in"><p class="ld-title">Personal HUB</p><div class="ld-track" role="progressbar" aria-label="Loading portfolio" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="ldBar"></i></div><p class="ld-meta"><b id="ldPct">0%</b><b id="ldMsg">Loading…</b></p></div></div>
 <div id="cursor" aria-hidden="true"></div>
 <a class="skip" href="#main">Skip to content</a>
 
@@ -82,7 +82,7 @@
 <section class="sec alt">
   <div class="wrap reveal">
     <h2>Skills</h2>
-    <p class="sub">Levels are sample values. Edit them in <code>data/data.json</code>.</p>
+    <p class="sub">Levels are self-assessed estimates and may change as I learn.</p>
     <div class="filters" id="skillFilters" role="group" aria-label="Skill categories"></div>
     <div class="skill-grid" id="skillGrid"></div>
   </div>
@@ -95,7 +95,7 @@
     <h2>Projects</h2>
     <div class="toolbar">
       <div class="filters" id="projFilters" role="group" aria-label="Project categories"></div>
-      <input id="projSearch" type="search" placeholder="Search projects or tech" aria-label="Search projects">
+      <form id="projSearchForm" class="search-form" role="search"><input id="projSearch" type="search" placeholder="Cari nama atau kategori" aria-label="Cari proyek"><button class="btn sm" type="submit">Cari</button></form>
     </div>
     <div class="proj-grid" id="projGrid" aria-live="polite"></div>
     <div id="projEmpty" class="empty" hidden><p>No projects match your search.</p><button class="btn" id="projReset">Clear filters</button></div>
@@ -106,8 +106,10 @@
 <div class="page" data-page="journey" hidden>
 <section class="sec alt">
   <div class="wrap reveal">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="#/home">Home</a><span>Journey</span></nav>
     <h2>Journey</h2>
     <ol class="timeline" id="timeline"></ol>
+    <article class="journey-detail" id="journeyDetail" hidden></article>
   </div>
 </section>
 </div>
@@ -121,11 +123,11 @@
       <ul class="links" id="contactLinks"></ul>
     </div>
     <form id="form" novalidate>
-      <label>Name<input name="name" type="text" autocomplete="name" required><small class="err"></small></label>
-      <label>Email<input name="email" type="email" autocomplete="email" required><small class="err"></small></label>
-      <label>Message<textarea name="message" rows="5" required minlength="10"></textarea><small class="err"></small></label>
-      <button class="btn primary" type="submit" id="submitBtn"><span>Send via email app</span></button>
-      <p class="note">There is no backend. Submitting opens your email app with the message filled in.</p>
+      <label>Name<input name="name" type="text" autocomplete="name" required minlength="2" maxlength="120"><small class="err" aria-live="polite"></small></label>
+      <label>Email<input name="email" type="email" autocomplete="email" required maxlength="190"><small class="err" aria-live="polite"></small></label>
+      <label>Message<textarea name="message" rows="5" required minlength="10" maxlength="5000"></textarea><small class="err" aria-live="polite"></small></label>
+      <button class="btn primary" type="submit" id="submitBtn"><span>Send message</span></button>
+      <p class="note">Your message is sent to my inbox. If sending fails, your email app opens instead.</p>
     </form>
   </div>
 </section>

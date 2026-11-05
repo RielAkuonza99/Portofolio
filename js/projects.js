@@ -22,12 +22,21 @@ const Projects = (() => {
   const fillMedia = (el, p, withVideo) => {
     const type = PH[p.type] ? p.type : "web";
     el.dataset.type = type; el.innerHTML = "";
-    if (withVideo && p.video) {
+    if (withVideo && p.videoEmbed) {
+      const f = document.createElement("iframe");
+      f.src = p.videoEmbed; f.title = p.name; f.loading = "lazy"; f.allowFullscreen = true; f.setAttribute("allow", "fullscreen; picture-in-picture"); f.referrerPolicy = "strict-origin-when-cross-origin"; el.append(f);
+    } else if (withVideo && p.video) {
       const v = document.createElement("video");
-      v.src = p.video; v.controls = true; v.playsInline = true; v.preload = "metadata"; if (p.image) v.poster = p.image; el.append(v);
+      v.src = p.video; v.controls = true; v.playsInline = true; v.preload = "metadata"; if (p.image) v.poster = p.image;
+      v.style.objectFit = p.videoCrop === "cover" ? "cover" : "contain";
+      v.addEventListener("loadedmetadata", () => { if (p.videoStart > 0) v.currentTime = p.videoStart; });
+      if (p.videoEnd > 0) v.addEventListener("timeupdate", () => { if (v.currentTime >= p.videoEnd) { v.pause(); v.currentTime = p.videoStart || 0; } });
+      el.append(v);
     } else {
       const i = document.createElement("img");
-      i.src = p.image || PH[type]; i.alt = ""; i.loading = "lazy"; el.append(i);
+      i.src = p.image || PH[type]; i.alt = ""; i.loading = "lazy";
+      i.style.objectPosition = p.imageCrop === "top" ? "center top" : p.imageCrop === "bottom" ? "center bottom" : "center";
+      el.append(i);
     }
   };
 
@@ -52,7 +61,7 @@ const Projects = (() => {
     filterBar($("projFilters"), cats.map(c => [c, c]), state.cat, c => { state.cat = c; renderProjects(); });
     const q = state.q.trim().toLowerCase();
     const list = PROJECTS.filter(p => (state.cat === "All" || p.cat === state.cat) &&
-      (!q || (p.name + " " + p.desc + " " + p.tech.join(" ")).toLowerCase().includes(q)));
+      (!q || (p.name + " " + p.cat).toLowerCase().includes(q)));
     const grid = $("projGrid"); grid.innerHTML = "";
     list.forEach(p => grid.append(card(p)));
     $("projEmpty").hidden = list.length > 0;
@@ -75,7 +84,7 @@ const Projects = (() => {
     renderSkills(); renderProjects();
     SKILLS.slice(0, 4).forEach(s => $("pvSkills").append(skillEl(s)));
     PROJECTS.slice(0, 3).forEach(p => $("pvProjects").append(card(p)));
-    let t; $("projSearch").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => { state.q = e.target.value; renderProjects(); }, 150); });
+    $("projSearchForm").addEventListener("submit", e => { e.preventDefault(); state.q = $("projSearch").value.trim(); renderProjects(); });
     $("projReset").addEventListener("click", () => { state.cat = "All"; state.q = ""; $("projSearch").value = ""; renderProjects(); });
     const m = $("modal");
     $("mClose").addEventListener("click", () => m.close());
