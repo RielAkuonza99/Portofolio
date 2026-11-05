@@ -1,7 +1,9 @@
-name: Deploy to InfinityFree (manual)
+name: Deploy to InfinityFree
 
-# Manual only: nothing deploys on push. Run from the Actions tab after you decide to release.
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
